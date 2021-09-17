@@ -10,11 +10,9 @@ declare function require(path: string): any
 
 interface IProps {}
 
-interface IState {
-  surfaceArea: number | null
-}
+interface IState {}
 
-const initialState: IState = { surfaceArea: 30000 }
+const initialState: IState = {}
 
 class App extends React.Component<IProps, IState> {
   // ===========================================================================
@@ -22,7 +20,6 @@ class App extends React.Component<IProps, IState> {
   // ===========================================================================
 
   readonly state: IState = initialState
-  private static searchInputRef = React.createRef<HTMLInputElement>()
 
   componentDidMount() {
     onmessage = (event: MessageEvent) => {
@@ -44,11 +41,6 @@ class App extends React.Component<IProps, IState> {
           cursor: "default",
         }}
       >
-        <input
-          value={this.state.surfaceArea}
-          style={{ width: "100%" }}
-          onChange={this.handleSurfaceArea}
-        ></input>
         <button onClick={() => this.runPlugin()}>Logo Layout!</button>
       </div>
     )
@@ -62,16 +54,9 @@ class App extends React.Component<IProps, IState> {
   // Events.
   // ===========================================================================
 
-  private handleSurfaceArea = (e) => {
-    this.setState({
-      surfaceArea: e.target.value,
-    })
-  }
-
   private runPlugin = () => {
     const pluginMessage: IPluginMessage = {
       type: "run-plugin",
-      data: { surfaceArea: this.state.surfaceArea },
     }
     parent.postMessage(
       {

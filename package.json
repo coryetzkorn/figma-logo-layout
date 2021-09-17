@@ -30,5 +30,8 @@
     "url-loader": "^2.1.0",
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.173"
   }
 }
