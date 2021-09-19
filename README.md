@@ -43,6 +43,8 @@ npm install
 npm run build
 ```
 
+Instead of running the build command you can also use the VSCode command palette. Hit ⌘⇧B in Visual Studio Code, then select tsc: watch - tsconfig.json.
+
 After that open a project in Figma Desktop, select _Plugins -> Development -> New Plugin_. Click `Choose a manifest.json` and find the `manifest.json` file in this plugin directory.
 
 Done! Now access via _Plugins -> Development -> Faker_

@@ -1,10 +1,12 @@
+import { IState } from "./ui"
+
 interface SurfaceAreaData {
   surfaceArea: number
 }
 
 export interface IPluginMessage {
   type: string
-  data?: SurfaceAreaData
+  data: IState
 }
 
 export interface Coordinates {

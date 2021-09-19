@@ -1,13 +1,11 @@
 import * as Faker from "faker"
 import { Coordinates, IPluginMessage } from "./plugin"
 import { compact } from "lodash"
+import { IState } from "./ui"
 
 figma.showUI(__html__, { height: 340, width: 240 })
 
 type ScalableNode = RectangleNode | VectorNode | FrameNode
-
-const itemsPerRow = 4
-const gridSpacing = 60
 
 function calculateNodeSurfaceArea(node: ScalableNode): number {
   return node.height * node.width
@@ -16,6 +14,11 @@ function calculateNodeSurfaceArea(node: ScalableNode): number {
 function calculateAverageSurfaceArea(nodes: ScalableNode[]): number {
   const sufaceAreas = nodes.map((node) => calculateNodeSurfaceArea(node))
   return Math.floor(sufaceAreas.reduce((a, b) => a + b) / sufaceAreas.length)
+}
+
+function calculateMaxWidth(area: number, width: number, height: number) {
+  const maxWidth = Math.round(width * Math.sqrt(area / (width * height)))
+  return maxWidth
 }
 
 function resizeNode(node: SceneNode, surfaceArea: number) {
@@ -41,41 +44,68 @@ function chunkArrayIntoGroups(
   return myArray
 }
 
-function calculateMaxRowHeight(nodes: SceneNode[]): number {
-  const nodeHeights = nodes.map((node) => node.height)
-  return Math.max(...nodeHeights)
+function calculateRowMaxHeights(rows: Array<SceneNode[]>, state: IState) {
+  return rows.map((row) => {
+    const nodeHeights = row.map((node) => node.height)
+    return Math.max(...nodeHeights)
+  })
 }
 
-function calculateRowYOffset(rows: Array<SceneNode[]>, rowIndex: number) {
-  if (rowIndex === 0) {
-    return 0
-  } else {
-    const previousRowMaxHeights = compact(
-      rows.map((previousRow, previousRowIndex) => {
-        if (previousRowIndex < rowIndex) {
-          return calculateMaxRowHeight(previousRow)
-        }
-      })
-    )
-    const sumOfMaxHeights = previousRowMaxHeights.reduce(function (a, b) {
-      return a + b
-    }, 0)
-    return sumOfMaxHeights + (gridSpacing * rowIndex - 1)
-  }
+function calculateRowYOffsets(rowMaxHeights: Array<number>, state: IState) {
+  return rowMaxHeights.map((rowMaxHeight, index) => {
+    if (index === 0) {
+      return 0
+    }
+    const heightsToAdd = rowMaxHeights.slice(0, index)
+    const sumOfHeights = heightsToAdd.reduce((a, b) => a + b)
+    const sumOfPadding = state.gridGap * index
+    return sumOfHeights + sumOfPadding
+  })
 }
 
-function positionNodes(nodes: SceneNode[]) {
-  const origin: Coordinates = { x: nodes[0].x, y: nodes[0].x }
-  const rows = chunkArrayIntoGroups(nodes, itemsPerRow)
+function calculateRowXOffsets(rows: Array<SceneNode[]>, state: IState) {
+  const rowWidths = rows.map((row) => {
+    const sumOfRowWidths = row
+      .map((node) => node.width)
+      .reduce(function (a, b) {
+        return a + b
+      }, 0)
+    const sumOfGapWidths = state.gridGap * (row.length - 1)
+    const totalWidth = sumOfRowWidths + sumOfGapWidths
+    return totalWidth
+  })
+  const largestWidth = Math.max(...rowWidths)
+  return rowWidths.map((rowWidth) => {
+    if (rowWidth === largestWidth) {
+      return 0
+    }
+    switch (state.alignment) {
+      case "left":
+        return 0
+      case "center":
+        return Math.floor((largestWidth - rowWidth) / 2)
+      case "right":
+        return largestWidth - rowWidth
+    }
+  })
+}
+
+function positionNodes(rows: Array<SceneNode[]>, state: IState) {
+  const firstRow = rows[0]
+  const origin: Coordinates = { x: firstRow[0].x, y: firstRow[0].x }
+  const rowMaxHeights = calculateRowMaxHeights(rows, state)
+  const rowYOffsets = calculateRowYOffsets(rowMaxHeights, state)
+  const rowXOffsets = calculateRowXOffsets(rows, state)
   rows.forEach((row, rowIndex) => {
-    const rowMaxHeight = calculateMaxRowHeight(row)
-    const rowYOffset = calculateRowYOffset(rows, rowIndex)
+    const rowMaxHeight = rowMaxHeights[rowIndex]
+    const rowYOffset = rowYOffsets[rowIndex]
+    const rowXOffset = rowXOffsets[rowIndex]
     row.forEach((node, nodeIndex) => {
       if (nodeIndex === 0) {
-        node.x = origin.x
+        node.x = origin.x + rowXOffset
       } else {
         const previousNode = row[nodeIndex - 1]
-        node.x = previousNode.x + previousNode.width + gridSpacing
+        node.x = previousNode.x + previousNode.width + state.gridGap
       }
       node.y = Math.floor(
         origin.y + rowYOffset + (rowMaxHeight - node.height) / 2
@@ -84,7 +114,7 @@ function positionNodes(nodes: SceneNode[]) {
   })
 }
 
-function traverseSelection() {
+function runPlugin(state: IState) {
   const logoNodes: ScalableNode[] = []
   const selection = figma.currentPage.selection
   // Store valid selected nodes
@@ -97,25 +127,19 @@ function traverseSelection() {
       logoNodes.push(selectedNode)
     }
   }
+  // Sort nodes by canvas position
+  // Split nodes into rows
+  const itemsPerRow = Math.ceil(logoNodes.length / state.rowCount)
+  const rows = chunkArrayIntoGroups(logoNodes, itemsPerRow)
   // Run transformations
   const averageSurfaceArea = calculateAverageSurfaceArea(logoNodes)
   resizeNodes(logoNodes, averageSurfaceArea)
-  positionNodes(logoNodes)
-}
-
-/**
- * Returns a `max-width` value for a logo based on a desired surface area and the logo’s natural width and height. Useful for making a set of logos with very different aspect ratios appear evenly sized.
- * @param area
- * @param width
- * @param height
- */
-function calculateMaxWidth(area: number, width: number, height: number) {
-  const maxWidth = Math.round(width * Math.sqrt(area / (width * height)))
-  return maxWidth
+  // Position nodes
+  positionNodes(rows, state)
 }
 
 figma.ui.onmessage = (pluginMessage: IPluginMessage) => {
   if (pluginMessage.type === "run-plugin") {
-    traverseSelection()
+    runPlugin(pluginMessage.data)
   }
 }
