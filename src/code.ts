@@ -3,7 +3,7 @@ import { Coordinates, IPluginMessage } from "./plugin"
 import { compact } from "lodash"
 import { IState } from "./ui"
 
-figma.showUI(__html__, { height: 340, width: 240 })
+figma.showUI(__html__, { height: 240, width: 240 })
 
 type ScalableNode = RectangleNode | VectorNode | FrameNode
 
@@ -16,12 +16,12 @@ function calculateAverageSurfaceArea(nodes: ScalableNode[]): number {
   return Math.floor(sufaceAreas.reduce((a, b) => a + b) / sufaceAreas.length)
 }
 
-function calculateMaxWidth(area: number, width: number, height: number) {
-  const maxWidth = Math.round(width * Math.sqrt(area / (width * height)))
+function calculateMaxWidth(surfaceArea: number, width: number, height: number) {
+  const maxWidth = Math.round(width * Math.sqrt(surfaceArea / (width * height)))
   return maxWidth
 }
 
-function resizeNode(node: SceneNode, surfaceArea: number) {
+function resizeNode(node: ScalableNode, surfaceArea: number) {
   const aspectRatio = node.height / node.width
   const maxWidth = calculateMaxWidth(surfaceArea, node.width, node.height)
   const newWidth = maxWidth
@@ -29,14 +29,14 @@ function resizeNode(node: SceneNode, surfaceArea: number) {
   node.resize(newWidth, newHeight)
 }
 
-function resizeNodes(nodes: SceneNode[], surfaceArea: number) {
+function resizeNodes(nodes: ScalableNode[], surfaceArea: number) {
   nodes.forEach((node) => resizeNode(node, surfaceArea))
 }
 
 function chunkArrayIntoGroups(
-  arr: Array<SceneNode>,
+  arr: Array<ScalableNode>,
   groupSize: number
-): Array<Array<SceneNode>> {
+): Array<Array<ScalableNode>> {
   var myArray = []
   for (var i = 0; i < arr.length; i += groupSize) {
     myArray.push(arr.slice(i, i + groupSize))
@@ -44,7 +44,7 @@ function chunkArrayIntoGroups(
   return myArray
 }
 
-function calculateRowMaxHeights(rows: Array<SceneNode[]>, state: IState) {
+function calculateRowMaxHeights(rows: Array<ScalableNode[]>, state: IState) {
   return rows.map((row) => {
     const nodeHeights = row.map((node) => node.height)
     return Math.max(...nodeHeights)
@@ -63,7 +63,7 @@ function calculateRowYOffsets(rowMaxHeights: Array<number>, state: IState) {
   })
 }
 
-function calculateRowXOffsets(rows: Array<SceneNode[]>, state: IState) {
+function calculateRowXOffsets(rows: Array<ScalableNode[]>, state: IState) {
   const rowWidths = rows.map((row) => {
     const sumOfRowWidths = row
       .map((node) => node.width)
@@ -90,7 +90,7 @@ function calculateRowXOffsets(rows: Array<SceneNode[]>, state: IState) {
   })
 }
 
-function positionNodes(rows: Array<SceneNode[]>, state: IState) {
+function positionNodes(rows: Array<ScalableNode[]>, state: IState) {
   const firstRow = rows[0]
   const origin: Coordinates = { x: firstRow[0].x, y: firstRow[0].x }
   const rowMaxHeights = calculateRowMaxHeights(rows, state)
@@ -114,6 +114,20 @@ function positionNodes(rows: Array<SceneNode[]>, state: IState) {
   })
 }
 
+function sortNodesTopToBottom(nodes: ScalableNode[]) {
+  return nodes.sort(function (a, b) {
+    return a.y - b.y
+  })
+}
+
+function sortRowNodesLeftToRight(rows: Array<ScalableNode[]>) {
+  return rows.map((row) =>
+    row.sort(function (a, b) {
+      return a.x - b.x
+    })
+  )
+}
+
 function runPlugin(state: IState) {
   const logoNodes: ScalableNode[] = []
   const selection = figma.currentPage.selection
@@ -128,14 +142,16 @@ function runPlugin(state: IState) {
     }
   }
   // Sort nodes by canvas position
+  const sortedNodes = sortNodesTopToBottom(logoNodes)
   // Split nodes into rows
-  const itemsPerRow = Math.ceil(logoNodes.length / state.rowCount)
-  const rows = chunkArrayIntoGroups(logoNodes, itemsPerRow)
+  const itemsPerRow = Math.ceil(sortedNodes.length / state.rowCount)
+  const rows = chunkArrayIntoGroups(sortedNodes, itemsPerRow)
+  const sortedRows = sortRowNodesLeftToRight(rows)
   // Run transformations
-  const averageSurfaceArea = calculateAverageSurfaceArea(logoNodes)
-  resizeNodes(logoNodes, averageSurfaceArea)
+  const averageSurfaceArea = calculateAverageSurfaceArea(sortedNodes)
+  resizeNodes(sortedNodes, averageSurfaceArea)
   // Position nodes
-  positionNodes(rows, state)
+  positionNodes(sortedRows, state)
 }
 
 figma.ui.onmessage = (pluginMessage: IPluginMessage) => {
