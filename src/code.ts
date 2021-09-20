@@ -1,9 +1,8 @@
-import * as Faker from "faker"
 import { Coordinates, IPluginMessage } from "./plugin"
 import { compact } from "lodash"
 import { IState } from "./ui"
 
-figma.showUI(__html__, { height: 240, width: 240 })
+figma.showUI(__html__, { height: 200, width: 240 })
 
 type ScalableNode = RectangleNode | VectorNode | FrameNode
 
@@ -13,7 +12,7 @@ function calculateNodeSurfaceArea(node: ScalableNode): number {
 
 function calculateAverageSurfaceArea(nodes: ScalableNode[]): number {
   const sufaceAreas = nodes.map((node) => calculateNodeSurfaceArea(node))
-  return Math.floor(sufaceAreas.reduce((a, b) => a + b) / sufaceAreas.length)
+  return Math.floor(sufaceAreas.reduce((a, b) => a + b) / nodes.length)
 }
 
 function calculateMaxWidth(surfaceArea: number, width: number, height: number) {
@@ -144,7 +143,9 @@ function runPlugin(state: IState) {
   // Sort nodes by canvas position
   const sortedNodes = sortNodesTopToBottom(logoNodes)
   // Split nodes into rows
-  const itemsPerRow = Math.ceil(sortedNodes.length / state.rowCount)
+  const safeRowCount =
+    state.rowCount < sortedNodes.length ? state.rowCount : sortedNodes.length
+  const itemsPerRow = Math.ceil(sortedNodes.length / safeRowCount)
   const rows = chunkArrayIntoGroups(sortedNodes, itemsPerRow)
   const sortedRows = sortRowNodesLeftToRight(rows)
   // Run transformations

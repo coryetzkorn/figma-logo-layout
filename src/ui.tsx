@@ -1,12 +1,13 @@
 import * as React from "react"
 import { CSSProperties } from "react"
 import * as ReactDOM from "react-dom"
-
 import "./ui.css"
-import { string } from "prop-types"
 import { IPluginMessage } from "./plugin"
-
-declare function require(path: string): any
+import LeftIcon from "./components/LeftIcon"
+import CenterIcon from "./components/CenterIcon"
+import RightIcon from "./components/RightIcon"
+import classnames from "classnames"
+import GridGapIcon from "./components/GridGapIcon"
 
 interface IProps {}
 
@@ -45,12 +46,7 @@ class App extends React.Component<IProps, IState> {
 
   render() {
     return (
-      <div
-        style={{
-          fontFamily: App.figmaStyles.fontFamily,
-          cursor: "default",
-        }}
-      >
+      <div className="main">
         {this.renderAlignmentControls()}
         {this.renderAdditionalControls()}
         {this.renderLayoutButton()}
@@ -60,85 +56,102 @@ class App extends React.Component<IProps, IState> {
 
   private renderAlignmentControls() {
     return (
-      <div>
-        <label>Alignment</label>
+      <section>
+        <label className="field-label">Alignment</label>
         <div>
           <button
+            className={classnames("alignment-button", {
+              selected: this.state.alignment === "left",
+            })}
             onClick={(e) =>
               this.setState({
                 alignment: "left",
               })
             }
           >
-            l
+            <LeftIcon />
           </button>
           <button
+            className={classnames("alignment-button", {
+              selected: this.state.alignment === "center",
+            })}
             onClick={(e) =>
               this.setState({
                 alignment: "center",
               })
             }
           >
-            c
+            <CenterIcon />
           </button>
           <button
+            className={classnames("alignment-button", {
+              selected: this.state.alignment === "right",
+            })}
             onClick={(e) =>
               this.setState({
                 alignment: "right",
               })
             }
           >
-            r
+            <RightIcon />
           </button>
         </div>
-      </div>
+      </section>
     )
   }
 
   private renderAdditionalControls() {
     return (
-      <div>
-        <div>
-          <label>Grid gap</label>
-          <input
-            type="number"
-            value={this.state.gridGap}
-            maxLength={3}
-            onChange={(e) =>
-              this.setState({
-                gridGap: parseInt(e.target.value),
-              })
-            }
-          />
+      <section>
+        <div className="field-group">
+          <div>
+            <label className="field-label">Grid gap</label>
+            <div className="input-wrap">
+              <div className="grid-gap-icon">
+                <GridGapIcon />
+              </div>
+              <input
+                className="grid-gap-input"
+                type="number"
+                value={this.state.gridGap}
+                maxLength={3}
+                onChange={(e) =>
+                  this.setState({
+                    gridGap: parseInt(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div>
+            <label className="field-label">Rows</label>
+            <div className="input-wrap">
+              <input
+                type="number"
+                value={this.state.rowCount}
+                maxLength={3}
+                onChange={(e) =>
+                  this.setState({
+                    rowCount: parseInt(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </div>
         </div>
-        <div>
-          <label>Rows</label>
-          <input
-            type="number"
-            value={this.state.rowCount}
-            maxLength={3}
-            onChange={(e) =>
-              this.setState({
-                rowCount: parseInt(e.target.value),
-              })
-            }
-          />
-        </div>
-      </div>
+      </section>
     )
   }
 
   private renderLayoutButton() {
     return (
-      <>
-        <button onClick={() => this.runPlugin()}>Logo Layout!</button>
-      </>
+      <section>
+        <button className="primary-button" onClick={() => this.runPlugin()}>
+          Apply Layout
+        </button>
+      </section>
     )
   }
-
-  // ===========================================================================
-  // Helpers.
-  // ===========================================================================
 
   // ===========================================================================
   // Events.
@@ -155,25 +168,6 @@ class App extends React.Component<IProps, IState> {
       },
       "*"
     )
-  }
-
-  // ==========================================================================
-  // Styles.
-  // ===========================================================================
-
-  private static figmaStyles = {
-    border: "1px solid #e5e5e5",
-    fontFamily: "Inter, sans-serif",
-    fontSize: {
-      base: 11,
-    },
-    fontWeight: {
-      bold: 600,
-    },
-    color: {
-      hover: "rgba(0,0,0,.06)",
-    },
-    borderRadius: 3,
   }
 }
 
