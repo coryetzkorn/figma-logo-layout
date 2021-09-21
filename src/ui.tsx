@@ -8,10 +8,11 @@ import CenterIcon from "./components/CenterIcon"
 import RightIcon from "./components/RightIcon"
 import classnames from "classnames"
 import GridGapIcon from "./components/GridGapIcon"
+import JustifiedIcon from "./components/JustifiedIcon"
 
 interface IProps {}
 
-type Alignment = "left" | "center" | "right"
+type Alignment = "left" | "center" | "right" | "justified"
 
 export interface IState {
   alignment: Alignment
@@ -94,6 +95,18 @@ class App extends React.Component<IProps, IState> {
             }
           >
             <RightIcon />
+          </button>
+          <button
+            className={classnames("alignment-button", {
+              selected: this.state.alignment === "justified",
+            })}
+            onClick={(e) =>
+              this.setState({
+                alignment: "justified",
+              })
+            }
+          >
+            <JustifiedIcon />
           </button>
         </div>
       </section>

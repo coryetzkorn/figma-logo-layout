@@ -85,6 +85,8 @@ function calculateRowXOffsets(rows: Array<ScalableNode[]>, state: IState) {
         return Math.floor((largestWidth - rowWidth) / 2)
       case "right":
         return largestWidth - rowWidth
+      case "justified":
+        return largestWidth - rowWidth
     }
   })
 }
@@ -100,11 +102,27 @@ function positionNodes(rows: Array<ScalableNode[]>, state: IState) {
     const rowYOffset = rowYOffsets[rowIndex]
     const rowXOffset = rowXOffsets[rowIndex]
     row.forEach((node, nodeIndex) => {
-      if (nodeIndex === 0) {
-        node.x = origin.x + rowXOffset
-      } else {
-        const previousNode = row[nodeIndex - 1]
-        node.x = previousNode.x + previousNode.width + state.gridGap
+      const previousNode = row[nodeIndex - 1]
+      switch (state.alignment) {
+        case "justified":
+          if (nodeIndex === 0) {
+            node.x = origin.x
+          } else {
+            const additionalXSpace = Math.floor(rowXOffset / (row.length - 1))
+            node.x =
+              previousNode.x +
+              previousNode.width +
+              state.gridGap +
+              additionalXSpace
+          }
+          break
+        default:
+          if (nodeIndex === 0) {
+            node.x = origin.x + rowXOffset
+          } else {
+            node.x = previousNode.x + previousNode.width + state.gridGap
+          }
+          break
       }
       node.y = Math.floor(
         origin.y + rowYOffset + (rowMaxHeight - node.height) / 2
