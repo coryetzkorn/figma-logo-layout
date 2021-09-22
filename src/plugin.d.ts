@@ -6,7 +6,7 @@ interface SurfaceAreaData {
 
 export interface IPluginMessage {
   type: string
-  data: IState
+  data?: IState
 }
 
 export interface Coordinates {

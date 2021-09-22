@@ -34,9 +34,13 @@ class App extends React.Component<IProps, IState> {
   readonly state: IState = initialState
 
   componentDidMount() {
+    this.getLsState()
     onmessage = (event: MessageEvent) => {
       if (event && event.data) {
         const pluginMessage = event.data.pluginMessage as IPluginMessage
+        if (pluginMessage.type === "ls-state-ready") {
+          this.setState(pluginMessage.data as IState)
+        }
       }
     }
   }
@@ -170,6 +174,31 @@ class App extends React.Component<IProps, IState> {
   // Events.
   // ===========================================================================
 
+  private setLsRecents = (pluginState: IState) => {
+    const pluginMessage: IPluginMessage = {
+      type: "set-ls-state",
+      data: pluginState,
+    }
+    parent.postMessage(
+      {
+        pluginMessage: pluginMessage,
+      },
+      "*"
+    )
+  }
+
+  private getLsState = () => {
+    const pluginMessage: IPluginMessage = {
+      type: "get-ls-state",
+    }
+    parent.postMessage(
+      {
+        pluginMessage: pluginMessage,
+      },
+      "*"
+    )
+  }
+
   private runPlugin = () => {
     const pluginMessage: IPluginMessage = {
       type: "run-plugin",
@@ -181,6 +210,8 @@ class App extends React.Component<IProps, IState> {
       },
       "*"
     )
+    // Save state to local storage after each plugin run
+    this.setLsRecents(this.state)
   }
 }
 

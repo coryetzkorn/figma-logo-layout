@@ -148,7 +148,7 @@ function sortRowNodesLeftToRight(rows: Array<ScalableNode[]>) {
 function runPlugin(state: IState) {
   const logoNodes: ScalableNode[] = []
   const selection = figma.currentPage.selection
-  // Store valid selected nodes
+  // Validate and store nodes
   for (const selectedNode of selection) {
     if (
       selectedNode.type === "RECTANGLE" ||
@@ -157,6 +157,9 @@ function runPlugin(state: IState) {
     ) {
       logoNodes.push(selectedNode)
     }
+  }
+  if (logoNodes.length < 2) {
+    figma.closePlugin("Select at least two items before running logo layout.")
   }
   // Sort nodes by canvas position
   const sortedNodes = sortNodesTopToBottom(logoNodes)
@@ -173,8 +176,32 @@ function runPlugin(state: IState) {
   positionNodes(sortedRows, state)
 }
 
+const lsKey = "figma-logo-layout"
+
+async function setLsState(pluginState: IState) {
+  await figma.clientStorage.setAsync(lsKey, pluginState)
+}
+
+async function getLsState() {
+  figma.clientStorage.getAsync(lsKey).then((pluginState) => {
+    if (pluginState) {
+      const pluginMessage: IPluginMessage = {
+        type: "ls-state-ready",
+        data: pluginState,
+      }
+      figma.ui.postMessage(pluginMessage)
+    }
+  })
+}
+
 figma.ui.onmessage = (pluginMessage: IPluginMessage) => {
   if (pluginMessage.type === "run-plugin") {
     runPlugin(pluginMessage.data)
+  }
+  if (pluginMessage.type === "set-ls-state") {
+    setLsState(pluginMessage.data as IState)
+  }
+  if (pluginMessage.type === "get-ls-state") {
+    getLsState()
   }
 }
