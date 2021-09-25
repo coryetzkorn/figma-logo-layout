@@ -131,11 +131,16 @@ class App extends React.Component<IProps, IState> {
                 className="grid-gap-input"
                 value={this.state.gridGap}
                 maxLength={3}
-                onChange={(e) =>
+                onFocus={this.handleInputFocus}
+                onChange={(e) => {
+                  const parsedValue = parseInt(e.target.value)
+                  if (isNaN(parsedValue)) {
+                    return
+                  }
                   this.setState({
-                    gridGap: parseInt(e.target.value),
+                    gridGap: parsedValue,
                   })
-                }
+                }}
               />
             </div>
           </div>
@@ -145,11 +150,16 @@ class App extends React.Component<IProps, IState> {
               <input
                 value={this.state.rowCount}
                 maxLength={3}
-                onChange={(e) =>
+                onFocus={this.handleInputFocus}
+                onChange={(e) => {
+                  const parsedValue = parseInt(e.target.value)
+                  if (isNaN(parsedValue)) {
+                    return
+                  }
                   this.setState({
-                    rowCount: parseInt(e.target.value),
+                    rowCount: parsedValue,
                   })
-                }
+                }}
               />
             </div>
           </div>
@@ -171,6 +181,8 @@ class App extends React.Component<IProps, IState> {
   // ===========================================================================
   // Events.
   // ===========================================================================
+
+  private handleInputFocus = (e) => e.target.select()
 
   private setLsRecents = (pluginState: IState) => {
     const pluginMessage: IPluginMessage = {

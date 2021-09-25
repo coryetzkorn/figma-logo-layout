@@ -18,14 +18,14 @@ Logo Layout optically scales and distributes logos in a grid. The algorithm take
 
 Want to contribute to this plugin?
 
-First clone this repository
+First clone this repository:
 
 ```shell
 git clone https://github.com/coryetzkorn/figma-logo-layout
 cd figma-logo-layout
 ```
 
-Install dependencies & build files
+Then install dependencies & build files:
 
 ```shell
 npm install

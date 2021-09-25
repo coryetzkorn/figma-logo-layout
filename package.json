@@ -29,6 +29,7 @@
     "webpack-cli": "3.3.12"
   },
   "devDependencies": {
+    "@figma/plugin-typings": "^1.35.0",
     "@types/lodash": "4.14.173",
     "@types/node": "13.13.52",
     "@types/react": "16.14.10",

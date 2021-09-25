@@ -4,7 +4,15 @@ import { IState } from "./ui"
 
 figma.showUI(__html__, { height: 200, width: 240 })
 
-type ScalableNode = RectangleNode | VectorNode | FrameNode
+type ScalableNode =
+  | RectangleNode
+  | VectorNode
+  | FrameNode
+  | GroupNode
+  | EllipseNode
+  | InstanceNode
+  | ComponentNode
+  | PolygonNode
 
 function calculateNodeSurfaceArea(node: ScalableNode): number {
   return node.height * node.width
@@ -154,13 +162,24 @@ function runPlugin(state: IState) {
       selectedNode.type === "RECTANGLE" ||
       selectedNode.type === "VECTOR" ||
       selectedNode.type === "FRAME" ||
-      selectedNode.type === "GROUP"
+      selectedNode.type === "GROUP" ||
+      selectedNode.type === "ELLIPSE" ||
+      selectedNode.type === "INSTANCE" ||
+      selectedNode.type === "COMPONENT" ||
+      selectedNode.type === "POLYGON"
     ) {
       logoNodes.push(selectedNode)
     }
   }
+  // Warn if some of the selected nodes are not a valid type
+  if (selection.length > logoNodes.length) {
+    figma.notify("Some of the elements you selected could not be scaled")
+    return
+  }
+  // Ensure enough nodes are selected to create a grid
   if (logoNodes.length < 2) {
-    figma.closePlugin("Select at least two items before running logo layout.")
+    figma.notify("Select at least two elements before applying layout")
+    return
   }
   // Sort nodes by canvas position
   const sortedNodes = sortNodesTopToBottom(logoNodes)
