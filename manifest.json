@@ -1,8 +1,9 @@
 {
   "name": "Logo Layout",
-  "id": "833836762121994814",
+  "id": "1023743344702871419",
   "api": "1.0.0",
-  "main": "dist/code.js",
-  "ui": "dist/ui.html",
-  "editorType": ["figma"]
+  "main": "code.js",
+  "editorType": [
+    "figma"
+  ]
 }
