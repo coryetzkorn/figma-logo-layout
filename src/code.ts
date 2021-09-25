@@ -93,7 +93,7 @@ function calculateRowXOffsets(rows: Array<ScalableNode[]>, state: IState) {
 
 function positionNodes(rows: Array<ScalableNode[]>, state: IState) {
   const firstRow = rows[0]
-  const origin: Coordinates = { x: firstRow[0].x, y: firstRow[0].x }
+  const origin: Coordinates = { x: firstRow[0].x, y: firstRow[0].y }
   const rowMaxHeights = calculateRowMaxHeights(rows, state)
   const rowYOffsets = calculateRowYOffsets(rowMaxHeights, state)
   const rowXOffsets = calculateRowXOffsets(rows, state)
@@ -153,7 +153,8 @@ function runPlugin(state: IState) {
     if (
       selectedNode.type === "RECTANGLE" ||
       selectedNode.type === "VECTOR" ||
-      selectedNode.type === "FRAME"
+      selectedNode.type === "FRAME" ||
+      selectedNode.type === "GROUP"
     ) {
       logoNodes.push(selectedNode)
     }

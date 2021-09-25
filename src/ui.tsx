@@ -129,7 +129,6 @@ class App extends React.Component<IProps, IState> {
               </div>
               <input
                 className="grid-gap-input"
-                type="number"
                 value={this.state.gridGap}
                 maxLength={3}
                 onChange={(e) =>
@@ -144,7 +143,6 @@ class App extends React.Component<IProps, IState> {
             <label className="field-label">Rows</label>
             <div className="input-wrap">
               <input
-                type="number"
                 value={this.state.rowCount}
                 maxLength={3}
                 onChange={(e) =>
