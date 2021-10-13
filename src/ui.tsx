@@ -2,7 +2,7 @@ import * as React from "react"
 import { CSSProperties } from "react"
 import * as ReactDOM from "react-dom"
 import "./ui.css"
-import { IPluginMessage } from "./plugin"
+import { IPluginMessage, IPluginState } from "./plugin"
 import LeftIcon from "./components/LeftIcon"
 import CenterIcon from "./components/CenterIcon"
 import RightIcon from "./components/RightIcon"
@@ -12,26 +12,18 @@ import JustifiedIcon from "./components/JustifiedIcon"
 
 interface IProps {}
 
-type Alignment = "left" | "center" | "right" | "justified"
-
-export interface IState {
-  alignment: Alignment
-  gridGap: number
-  rowCount: number
-}
-
-const initialState: IState = {
+const initialState: IPluginState = {
   alignment: "center",
   gridGap: 20,
   rowCount: 3,
 }
 
-class App extends React.Component<IProps, IState> {
+class App extends React.Component<IProps, IPluginState> {
   // ===========================================================================
   // Lifecycle.
   // ===========================================================================
 
-  readonly state: IState = initialState
+  readonly state: IPluginState = initialState
 
   componentDidMount() {
     this.getLsState()
@@ -39,7 +31,7 @@ class App extends React.Component<IProps, IState> {
       if (event && event.data) {
         const pluginMessage = event.data.pluginMessage as IPluginMessage
         if (pluginMessage.type === "ls-state-ready") {
-          this.setState(pluginMessage.data as IState)
+          this.setState(pluginMessage.data as IPluginState)
         }
       }
     }
@@ -184,7 +176,7 @@ class App extends React.Component<IProps, IState> {
 
   private handleInputFocus = (e) => e.target.select()
 
-  private setLsRecents = (pluginState: IState) => {
+  private setLsRecents = (pluginState: IPluginState) => {
     const pluginMessage: IPluginMessage = {
       type: "set-ls-state",
       data: pluginState,

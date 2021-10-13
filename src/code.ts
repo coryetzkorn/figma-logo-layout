@@ -1,18 +1,12 @@
-import { Coordinates, IPluginMessage } from "./plugin"
+import {
+  ICoordinates,
+  IPluginMessage,
+  IPluginState,
+  ScalableNode,
+} from "./plugin"
 import { compact } from "lodash"
-import { IState } from "./ui"
 
 figma.showUI(__html__, { height: 200, width: 240 })
-
-type ScalableNode =
-  | RectangleNode
-  | VectorNode
-  | FrameNode
-  | GroupNode
-  | EllipseNode
-  | InstanceNode
-  | ComponentNode
-  | PolygonNode
 
 function calculateNodeSurfaceArea(node: ScalableNode): number {
   return node.height * node.width
@@ -51,14 +45,20 @@ function chunkArrayIntoGroups(
   return myArray
 }
 
-function calculateRowMaxHeights(rows: Array<ScalableNode[]>, state: IState) {
+function calculateRowMaxHeights(
+  rows: Array<ScalableNode[]>,
+  state: IPluginState
+) {
   return rows.map((row) => {
     const nodeHeights = row.map((node) => node.height)
     return Math.max(...nodeHeights)
   })
 }
 
-function calculateRowYOffsets(rowMaxHeights: Array<number>, state: IState) {
+function calculateRowYOffsets(
+  rowMaxHeights: Array<number>,
+  state: IPluginState
+) {
   return rowMaxHeights.map((rowMaxHeight, index) => {
     if (index === 0) {
       return 0
@@ -70,7 +70,10 @@ function calculateRowYOffsets(rowMaxHeights: Array<number>, state: IState) {
   })
 }
 
-function calculateRowXOffsets(rows: Array<ScalableNode[]>, state: IState) {
+function calculateRowXOffsets(
+  rows: Array<ScalableNode[]>,
+  state: IPluginState
+) {
   const rowWidths = rows.map((row) => {
     const sumOfRowWidths = row
       .map((node) => node.width)
@@ -99,9 +102,9 @@ function calculateRowXOffsets(rows: Array<ScalableNode[]>, state: IState) {
   })
 }
 
-function positionNodes(rows: Array<ScalableNode[]>, state: IState) {
+function positionNodes(rows: Array<ScalableNode[]>, state: IPluginState) {
   const firstRow = rows[0]
-  const origin: Coordinates = { x: firstRow[0].x, y: firstRow[0].y }
+  const origin: ICoordinates = { x: firstRow[0].x, y: firstRow[0].y }
   const rowMaxHeights = calculateRowMaxHeights(rows, state)
   const rowYOffsets = calculateRowYOffsets(rowMaxHeights, state)
   const rowXOffsets = calculateRowXOffsets(rows, state)
@@ -153,7 +156,7 @@ function sortRowNodesLeftToRight(rows: Array<ScalableNode[]>) {
   )
 }
 
-function runPlugin(state: IState) {
+function runPlugin(state: IPluginState) {
   const logoNodes: ScalableNode[] = []
   const selection = figma.currentPage.selection
   // Validate and store nodes
@@ -198,7 +201,7 @@ function runPlugin(state: IState) {
 
 const lsKey = "figma-logo-layout"
 
-async function setLsState(pluginState: IState) {
+async function setLsState(pluginState: IPluginState) {
   await figma.clientStorage.setAsync(lsKey, pluginState)
 }
 
@@ -219,7 +222,7 @@ figma.ui.onmessage = (pluginMessage: IPluginMessage) => {
     runPlugin(pluginMessage.data)
   }
   if (pluginMessage.type === "set-ls-state") {
-    setLsState(pluginMessage.data as IState)
+    setLsState(pluginMessage.data as IPluginState)
   }
   if (pluginMessage.type === "get-ls-state") {
     getLsState()
