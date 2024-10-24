@@ -4,7 +4,6 @@ import {
   IPluginState,
   ScalableNode,
 } from "./plugin"
-import { compact } from "lodash"
 
 figma.showUI(__html__, { height: 200, width: 240 })
 
@@ -38,17 +37,14 @@ function chunkArrayIntoGroups(
   arr: Array<ScalableNode>,
   groupSize: number
 ): Array<Array<ScalableNode>> {
-  var myArray = []
-  for (var i = 0; i < arr.length; i += groupSize) {
+  const myArray = []
+  for (let i = 0; i < arr.length; i += groupSize) {
     myArray.push(arr.slice(i, i + groupSize))
   }
   return myArray
 }
 
-function calculateRowMaxHeights(
-  rows: Array<ScalableNode[]>,
-  state: IPluginState
-) {
+function calculateRowMaxHeights(rows: Array<ScalableNode[]>) {
   return rows.map((row) => {
     const nodeHeights = row.map((node) => node.height)
     return Math.max(...nodeHeights)
@@ -105,7 +101,7 @@ function calculateRowXOffsets(
 function positionNodes(rows: Array<ScalableNode[]>, state: IPluginState) {
   const firstRow = rows[0]
   const origin: ICoordinates = { x: firstRow[0].x, y: firstRow[0].y }
-  const rowMaxHeights = calculateRowMaxHeights(rows, state)
+  const rowMaxHeights = calculateRowMaxHeights(rows)
   const rowYOffsets = calculateRowYOffsets(rowMaxHeights, state)
   const rowXOffsets = calculateRowXOffsets(rows, state)
   rows.forEach((row, rowIndex) => {

@@ -1,16 +1,13 @@
-import * as React from "react"
-import { CSSProperties } from "react"
-import * as ReactDOM from "react-dom"
-import "./ui.css"
-import { IPluginMessage, IPluginState } from "./plugin"
-import LeftIcon from "./components/LeftIcon"
-import CenterIcon from "./components/CenterIcon"
-import RightIcon from "./components/RightIcon"
 import classnames from "classnames"
+import * as React from "react"
+import * as ReactDOM from "react-dom/client"
+import CenterIcon from "./components/CenterIcon"
 import GridGapIcon from "./components/GridGapIcon"
 import JustifiedIcon from "./components/JustifiedIcon"
-
-interface IProps {}
+import LeftIcon from "./components/LeftIcon"
+import RightIcon from "./components/RightIcon"
+import { Alignment, IPluginMessage, IPluginState } from "./plugin"
+import "./ui.css"
 
 const initialState: IPluginState = {
   alignment: "center",
@@ -18,203 +15,132 @@ const initialState: IPluginState = {
   rowCount: 3,
 }
 
-class App extends React.Component<IProps, IPluginState> {
-  // ===========================================================================
-  // Lifecycle.
-  // ===========================================================================
+function App() {
+  const [state, setState] = React.useState<IPluginState>(initialState)
 
-  readonly state: IPluginState = initialState
-
-  componentDidMount() {
-    this.getLsState()
-    onmessage = (event: MessageEvent) => {
+  React.useEffect(() => {
+    getLsState()
+    const handleMessage = (event: MessageEvent) => {
       if (event && event.data) {
         const pluginMessage = event.data.pluginMessage as IPluginMessage
         if (pluginMessage.type === "ls-state-ready") {
-          this.setState(pluginMessage.data as IPluginState)
+          setState(pluginMessage.data as IPluginState)
         }
       }
     }
-  }
+    window.addEventListener("message", handleMessage)
+    return () => window.removeEventListener("message", handleMessage)
+  }, [])
 
-  // ===========================================================================
-  // Render.
-  // ===========================================================================
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) =>
+    e.target.select()
 
-  render() {
-    return (
-      <div className="main">
-        {this.renderAlignmentControls()}
-        {this.renderAdditionalControls()}
-        {this.renderLayoutButton()}
-      </div>
-    )
-  }
-
-  private renderAlignmentControls() {
-    return (
-      <section>
-        <label className="field-label">Alignment</label>
-        <div>
-          <button
-            className={classnames("alignment-button", {
-              selected: this.state.alignment === "left",
-            })}
-            onClick={(e) =>
-              this.setState({
-                alignment: "left",
-              })
-            }
-          >
-            <LeftIcon />
-          </button>
-          <button
-            className={classnames("alignment-button", {
-              selected: this.state.alignment === "center",
-            })}
-            onClick={(e) =>
-              this.setState({
-                alignment: "center",
-              })
-            }
-          >
-            <CenterIcon />
-          </button>
-          <button
-            className={classnames("alignment-button", {
-              selected: this.state.alignment === "right",
-            })}
-            onClick={(e) =>
-              this.setState({
-                alignment: "right",
-              })
-            }
-          >
-            <RightIcon />
-          </button>
-          <button
-            className={classnames("alignment-button", {
-              selected: this.state.alignment === "justified",
-            })}
-            onClick={(e) =>
-              this.setState({
-                alignment: "justified",
-              })
-            }
-          >
-            <JustifiedIcon />
-          </button>
-        </div>
-      </section>
-    )
-  }
-
-  private renderAdditionalControls() {
-    return (
-      <section>
-        <div className="field-group">
-          <div>
-            <label className="field-label">Grid gap</label>
-            <div className="input-wrap">
-              <div className="grid-gap-icon">
-                <GridGapIcon />
-              </div>
-              <input
-                className="grid-gap-input"
-                value={this.state.gridGap}
-                maxLength={3}
-                onFocus={this.handleInputFocus}
-                onChange={(e) => {
-                  const parsedValue = parseInt(e.target.value)
-                  if (isNaN(parsedValue)) {
-                    return
-                  }
-                  this.setState({
-                    gridGap: parsedValue,
-                  })
-                }}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="field-label">Rows</label>
-            <div className="input-wrap">
-              <input
-                value={this.state.rowCount}
-                maxLength={3}
-                onFocus={this.handleInputFocus}
-                onChange={(e) => {
-                  const parsedValue = parseInt(e.target.value)
-                  if (isNaN(parsedValue)) {
-                    return
-                  }
-                  this.setState({
-                    rowCount: parsedValue,
-                  })
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  private renderLayoutButton() {
-    return (
-      <section>
-        <button className="primary-button" onClick={() => this.runPlugin()}>
-          Apply Layout
-        </button>
-      </section>
-    )
-  }
-
-  // ===========================================================================
-  // Events.
-  // ===========================================================================
-
-  private handleInputFocus = (e) => e.target.select()
-
-  private setLsRecents = (pluginState: IPluginState) => {
+  const setLsRecents = (pluginState: IPluginState) => {
     const pluginMessage: IPluginMessage = {
       type: "set-ls-state",
       data: pluginState,
     }
-    parent.postMessage(
-      {
-        pluginMessage: pluginMessage,
-      },
-      "*"
-    )
+    parent.postMessage({ pluginMessage }, "*")
   }
 
-  private getLsState = () => {
+  const getLsState = () => {
     const pluginMessage: IPluginMessage = {
       type: "get-ls-state",
     }
-    parent.postMessage(
-      {
-        pluginMessage: pluginMessage,
-      },
-      "*"
-    )
+    parent.postMessage({ pluginMessage }, "*")
   }
 
-  private runPlugin = () => {
+  const runPlugin = () => {
     const pluginMessage: IPluginMessage = {
       type: "run-plugin",
-      data: this.state,
+      data: state,
     }
-    parent.postMessage(
-      {
-        pluginMessage: pluginMessage,
-      },
-      "*"
-    )
-    // Save state to local storage after each plugin run
-    this.setLsRecents(this.state)
+    parent.postMessage({ pluginMessage }, "*")
+    setLsRecents(state)
   }
+
+  const renderAlignmentControls = () => (
+    <section>
+      <label className="field-label">Alignment</label>
+      <div>
+        {["left", "center", "right", "justified"].map((alignment) => (
+          <button
+            key={alignment}
+            className={classnames("alignment-button", {
+              selected: state.alignment === (alignment as Alignment),
+            })}
+            onClick={() =>
+              setState({ ...state, alignment: alignment as Alignment })
+            }
+          >
+            {alignment === "left" && <LeftIcon />}
+            {alignment === "center" && <CenterIcon />}
+            {alignment === "right" && <RightIcon />}
+            {alignment === "justified" && <JustifiedIcon />}
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+
+  const renderAdditionalControls = () => (
+    <section>
+      <div className="field-group">
+        <div>
+          <label className="field-label">Grid gap</label>
+          <div className="input-wrap">
+            <div className="grid-gap-icon">
+              <GridGapIcon />
+            </div>
+            <input
+              className="grid-gap-input"
+              value={state.gridGap}
+              maxLength={3}
+              onFocus={handleInputFocus}
+              onChange={(e) => {
+                const parsedValue = parseInt(e.target.value)
+                if (!isNaN(parsedValue)) {
+                  setState({ ...state, gridGap: parsedValue })
+                }
+              }}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="field-label">Rows</label>
+          <div className="input-wrap">
+            <input
+              value={state.rowCount}
+              maxLength={3}
+              onFocus={handleInputFocus}
+              onChange={(e) => {
+                const parsedValue = parseInt(e.target.value)
+                if (!isNaN(parsedValue)) {
+                  setState({ ...state, rowCount: parsedValue })
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+
+  const renderLayoutButton = () => (
+    <section>
+      <button className="primary-button" onClick={runPlugin}>
+        Apply Layout
+      </button>
+    </section>
+  )
+
+  return (
+    <div className="main">
+      {renderAlignmentControls()}
+      {renderAdditionalControls()}
+      {renderLayoutButton()}
+    </div>
+  )
 }
 
-ReactDOM.render(<App />, document.getElementById("react-page"))
+ReactDOM.createRoot(document.getElementById("react-page")).render(<App />)
